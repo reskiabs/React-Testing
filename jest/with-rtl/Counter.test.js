@@ -1,27 +1,22 @@
 /** @jest-environment jsdom */
 
 import "@testing-library/jest-dom";
-
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import Counter from "./Counter";
 
 global.IS_REACT_ACT_ENVIRONMENT = true;
 
-test("should render and update the count when on click", () => {
+test("should render and update the count when on click", async () => {
+  const user = userEvent.setup();
   render(<Counter />);
 
   const button = screen.getByRole("button");
-  console.log(button);
-  // expect(button.textContent).toBe("Count: 0");
 
-  // act(() => {
-  //   button.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-  // });
-  // expect(button.textContent).toBe("Count: 1");
+  expect(button).toHaveTextContent("Count: 0");
 
-  // act(() => {
-  //   root.unmount();
-  // });
+  await user.click(button);
 
-  // container.remove();
+  console.log("button after click", button.outerHTML);
+  expect(button).toHaveTextContent("Count: 1");
 });
