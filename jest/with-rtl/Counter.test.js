@@ -17,6 +17,19 @@ test("should render and update the count when on click", async () => {
 
   await user.click(button);
 
-  console.log("button after click", button.outerHTML);
+  console.log("After click", button.outerHTML);
   expect(button).toHaveTextContent("Count: 1");
+});
+
+test("should start with a clean DOM in the next step", () => {
+  const buttonBefore = document.body.querySelectorAll("button");
+  console.log("button before render in second test: ", buttonBefore.length);
+
+  expect(buttonBefore.length).toBe(0);
+
+  render(<Counter />);
+
+  const buttonAfter = screen.getByRole("button");
+  expect(buttonAfter).toBeInTheDocument();
+  expect(buttonAfter).toHaveTextContent("Count: 0");
 });
