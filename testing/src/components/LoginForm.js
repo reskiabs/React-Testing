@@ -44,7 +44,9 @@ function LoginForm({ onSubmit }) {
         />
       </div>
       {errors.email && <div role="alert">{errors.email.message}</div>}
-      {errors.password && <div role="alert">{errors.password.message}</div>}
+      {!errors.email && errors.password && (
+        <div role="alert">{errors.password.message}</div>
+      )}
       <button type="submit">Login</button>
     </form>
   );
