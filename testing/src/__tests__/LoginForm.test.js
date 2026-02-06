@@ -1,9 +1,14 @@
-describe("Login Form Component", () => {
-  test("should render login form correctly", () => {
-    // Test implementation goes here
-  });
+import "@testing-library/jest-dom";
+import { render, screen } from "@testing-library/react";
+import LoginForm from "../components/LoginForm";
 
-  test("should handle form submission", () => {
-    // Test implementation goes here
+describe("Login Form Component", () => {
+  test("render login form with email and password fields", () => {
+    render(<LoginForm onSubmit={jest.fn()} />);
+
+    expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
+
+    expect(screen.getByRole("button", { name: /login/i })).toBeInTheDocument();
   });
 });
