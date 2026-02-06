@@ -1,44 +1,36 @@
-import { useState } from "react";
+import { useForm } from "react-hook-form";
+
+const emailRegex =
+  /^(?:[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}|(?:\[(?:\d{1,3}\.){3}\d{1,3}\]))$/;
 
 function LoginForm({ onSubmit }) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({ mode: "onSubmit" });
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setError("");
-
-    if (!email) {
-      setError("Email is required");
-      return;
-    }
-
-    const emailRegex =
-      /^(?:[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}|(?:\[(?:\d{1,3}\.){3}\d{1,3}\]))$/;
-
-    if (!emailRegex.test(email)) {
-      setError("Email is invalid");
-      return;
-    }
-
-    if (!password) {
-      setError("Password is required");
-      return;
-    }
-
-    onSubmit({ email, password });
+  const onValidSubmit = (data) => {
+    onSubmit({
+      email: data.email,
+      password: data.password,
+    });
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit(onValidSubmit)}>
       <div>
         <label htmlFor="email">Email</label>
         <input
           id="email"
           type="text"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          {...register("email", {
+            required: "Email is Required",
+            pattern: {
+              value: emailRegex,
+              message: "Email is Invalid",
+            },
+          })}
         />
       </div>
       <div>
@@ -46,11 +38,13 @@ function LoginForm({ onSubmit }) {
         <input
           id="password"
           type="text"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          {...register("password", {
+            required: "Password is Required",
+          })}
         />
       </div>
-      {error && <div role="alert">{error}</div>}
+      {errors.email && <div role="alert">{errors.email.message}</div>}
+      {errors.password && <div role="alert">{errors.password.message}</div>}
       <button type="submit">Login</button>
     </form>
   );
