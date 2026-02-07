@@ -8,13 +8,22 @@ function LoginForm({ onSubmit }) {
     register,
     handleSubmit,
     formState: { errors },
+    setError,
   } = useForm({ mode: "onSubmit" });
 
-  const onValidSubmit = (data) => {
-    onSubmit({
-      email: data.email,
-      password: data.password,
-    });
+  const onValidSubmit = async (data) => {
+    try {
+      const response = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+      onSubmit(result);
+    } catch (error) {
+      setError("root", { message: errors.message });
+    }
   };
 
   return (
@@ -47,6 +56,7 @@ function LoginForm({ onSubmit }) {
       {!errors.email && errors.password && (
         <div role="alert">{errors.password.message}</div>
       )}
+      {errors.root && <div role="alert">{errors.root.message}</div>}
       <button type="submit">Login</button>
     </form>
   );

@@ -1,8 +1,9 @@
-import { faker } from "@faker-js/faker";
 import "@testing-library/jest-dom";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { http, HttpResponse } from "msw";
 import LoginForm from "../components/LoginForm";
+import { server } from "../mocks/server";
 
 describe("Login Form Component", () => {
   test("render login form with email and password fields", () => {
@@ -46,6 +47,7 @@ describe("Login Form Component", () => {
   test("submit the form with correct email and password", async () => {
     const user = userEvent.setup();
     const handleSubmit = jest.fn();
+
     render(<LoginForm onSubmit={handleSubmit} />);
 
     const emailInput = screen.getByLabelText(/email/i);
@@ -56,35 +58,31 @@ describe("Login Form Component", () => {
     await user.type(passwordInput, "password123");
     await user.click(submitButton);
 
-    // screen.debug();
-
-    expect(handleSubmit).toHaveBeenCalledTimes(1);
-    expect(handleSubmit).toHaveBeenCalledWith({
-      email: "test@example.com",
-      password: "password123",
+    await waitFor(() => {
+      expect(handleSubmit).toHaveBeenCalledTimes(1);
+      expect(handleSubmit).toHaveBeenCalledWith({
+        user: { name: "Reski" },
+      });
     });
   });
 
-  test("submit the form with varied data using faker", async () => {
+  test("show error when credential are wrong", async () => {
     const user = userEvent.setup();
     const handleSubmit = jest.fn();
+
     render(<LoginForm onSubmit={handleSubmit} />);
 
     const emailInput = screen.getByLabelText(/email/i);
     const passwordInput = screen.getByLabelText(/password/i);
     const submitButton = screen.getByRole("button", { name: /login/i });
 
-    const randomEmail = faker.internet.email();
-    const randomPassword = faker.internet.password();
-
-    await user.type(emailInput, randomEmail);
-    await user.type(passwordInput, randomPassword);
+    await user.type(emailInput, "wrong@example.com");
+    await user.type(passwordInput, "passwordsss");
     await user.click(submitButton);
 
-    expect(handleSubmit).toHaveBeenCalledTimes(1);
-    expect(handleSubmit).toHaveBeenCalledWith({
-      email: randomEmail,
-      password: randomPassword,
+    waitFor(async () => {
+      const errorMessage = await screen.queryByRole("alert");
+      expect(errorMessage).toHaveTextContent(/invalid credentials/i);
     });
   });
 
@@ -100,7 +98,7 @@ describe("Login Form Component", () => {
 
     // queryBy* → dipakai jika element MUNGKIN tidak ada
     // return null jika tidak ditemukan (TIDAK throw error)
-    const errorMessage = screen.queryByRole("alert");
+    const errorMessage = await screen.queryByRole("alert");
     expect(errorMessage).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /login/i }));
@@ -109,5 +107,36 @@ describe("Login Form Component", () => {
     // akan menunggu sampai element muncul atau timeout
     const errorAfter = await screen.findByRole("alert");
     expect(errorAfter).toBeInTheDocument();
+  });
+
+  test("show error when server fail", async () => {
+    const user = userEvent.setup();
+    const handleSubmit = jest.fn();
+
+    render(<LoginForm onSubmit={handleSubmit} />);
+
+    server.use(
+      http.post("/api/login", () => {
+        HttpResponse.json(
+          {
+            message: "Server Error",
+          },
+          { status: 500 },
+        );
+      }),
+    );
+
+    const emailInput = screen.getByLabelText(/email/i);
+    const passwordInput = screen.getByLabelText(/password/i);
+    const submitButton = screen.getByRole("button", { name: /login/i });
+
+    await user.type(emailInput, "wrong@example.com");
+    await user.type(passwordInput, "password123");
+    await user.click(submitButton);
+
+    waitFor(async () => {
+      const errorMessage = await screen.queryByRole("alert");
+      expect(errorMessage).toHaveTextContent(/invalid credentials/i);
+    });
   });
 });
